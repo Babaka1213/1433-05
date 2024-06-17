@@ -1,24 +1,57 @@
-from auth import hash_password, check_password
-from db import create_user, get_user_by_username, update_user_password
-from models import User
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import scrolledtext
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from auth import check_password, hash_password
+from registration_app import open_registration_window
+from chat_app import ChatApp
+from models import Base, User, Message
 
-def register_user(username, password):
-    hashed_password = hash_password(password)
-    user = create_user(username, hashed_password)
-    if user:
-        print(f"Пользователь {username} успешно зарегистрирован.")
-    else:
-        print(f"Ошибка при регистрации пользователя {username}.")
+# Подключение к базе данных
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Создание всех таблиц базы данных, если они еще не созданы
+Base.metadata.create_all(bind=engine)
 
 def login_user(username, password):
-    user = get_user_by_username(username)
+    session = SessionLocal()
+    user = session.query(User).filter(User.username == username).first()
+    session.close()
+
     if user and check_password(password, user.password_hash):
-        print(f"Пользователь {username} успешно авторизован.")
+        root.destroy()  # Закрываем окно входа
+        chat_root = tk.Tk()
+        chat_app = ChatApp(chat_root, username=username)
+        chat_root.mainloop()
     else:
-        print(f"Неверные имя пользователя или пароль для пользователя {username}.")
+        messagebox.showerror("Ошибка", "Неверное имя пользователя или пароль")
+
+def main():
+    global root
+
+    root = tk.Tk()
+    root.title("Вход в систему")
+
+    username_label = tk.Label(root, text="Имя пользователя:")
+    username_label.pack()
+    username_entry = tk.Entry(root)
+    username_entry.pack()
+
+    password_label = tk.Label(root, text="Пароль:")
+    password_label.pack()
+    password_entry = tk.Entry(root, show="*")
+    password_entry.pack()
+
+    login_button = tk.Button(root, text="Вход", command=lambda: login_user(username_entry.get(), password_entry.get()))
+    login_button.pack()
+
+    register_button = tk.Button(root, text="Регистрация", command=open_registration_window)
+    register_button.pack()
+
+    root.mainloop()
 
 if __name__ == "__main__":
-    # Пример использования:
-    register_user("user1", "password123")
-    login_user("user1", "password123")
-
+    main()
