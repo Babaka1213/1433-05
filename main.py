@@ -1,16 +1,24 @@
-# This is a sample Python script.
+from auth import hash_password, check_password
+from db import create_user, get_user_by_username, update_user_password
+from models import User
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+def register_user(username, password):
+    hashed_password = hash_password(password)
+    user = create_user(username, hashed_password)
+    if user:
+        print(f"Пользователь {username} успешно зарегистрирован.")
+    else:
+        print(f"Ошибка при регистрации пользователя {username}.")
 
+def login_user(username, password):
+    user = get_user_by_username(username)
+    if user and check_password(password, user.password_hash):
+        print(f"Пользователь {username} успешно авторизован.")
+    else:
+        print(f"Неверные имя пользователя или пароль для пользователя {username}.")
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+if __name__ == "__main__":
+    # Пример использования:
+    register_user("user1", "password123")
+    login_user("user1", "password123")
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
